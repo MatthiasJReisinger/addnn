@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+import "addnn/node/proto/node_state.proto";
+import "google/protobuf/empty.proto";
+import "addnn/controller/proto/controller.proto";
+
+package addnn.grpc.node;
+
+// Provides means to configure and monitor an ADDNN compute node.
+service Node {
+    // Deploy parts of a DNN model to this compute node.
+    rpc DeployModel(stream LocalLayer) returns (google.protobuf.Empty) {}
+
+    // Delete the deployed DNN model parts from this compute node.
+    rpc DeleteModel(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+    rpc ActivateLayers(ActivateLayersRequest) returns (google.protobuf.Empty) {}
+
+    rpc DeactivateLayers(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+    // Read the current state of this compute node.
+    rpc ReadNodeState(ReadNodeStateRequest) returns (ReadNodeStateResponse) {}
+
+    // Update the resource state of this compute node.
+    rpc UpdateResourceState(UpdateResourceStateRequest) returns (google.protobuf.Empty) {}
+
+    // Read the current neighbours of this compute node.
+    rpc ReadNeighbourNodes(google.protobuf.Empty) returns (ReadNeighbourNodesResponse) {}
+}
+
+// Represents the exit branch of a ADDNN layer.
+message Exit {
+    // A pickled torch.nn.Module that represents the classifier of this exit.
+    bytes classifier = 1;
+
+    // The confidence threshold of this side exit (a value in the closd interval [0.0, 1.0]).
+    float confidence_threshold = 2;
+}
+
+// Represents an ADDNN layer at a remote host.
+message RemoteLayer {
+    // The host name or IP of the node that hosts the layer.
+    string host = 1;
+
+    // The port at which layer can be reached.
+    int32 port = 2;
+}
+
+// Repesents an locally available ADDNN layer.
+message LocalLayer {
+    // A pickled torch.nn.Module that represents this layer's portion of the DNN's main branch.
+    bytes main_branch = 1;
+
+    // An optional exit that is placed at this layer, which is either hosted by the current node or remotely.
+    Exit exit_branch = 2;
+
+    // Whether the layer's branches are instances of `torch.jit.ScriptModule` instead of `torch.nn.Module`.
+    bool is_torchscript = 3;
+}
+
+// Repesents an ADDNN layer.
+message Layer {
+    // The layers that are assigned to the current node.
+    LocalLayer local_layer = 1;
+
+    // The endpoint of the remote model that hosts the upper layers of the DNN.
+    RemoteLayer remote_layer = 2;
+
+    // The index of the layer that globally identifies its position in the ADDNN.
+    uint32 index = 3;
+}
+
+// References a range of layers in a model.
+message LayerRange {
+    // The index of the first layer referenced by the range.
+    uint32 start_index = 1;
+
+    // The index of the last layer referenced by the range.
+    uint32 end_index = 2;
+}
+
+// Request message of the ActivateLayers method of the Node service.
+message ActivateLayersRequest {
+    // The range of layers that should be active on this node.
+    LayerRange active_layers = 1;
+
+    // Determines where to reach the next layer, if existing (i.e. `active_layers.end_index + 1`).
+    RemoteLayer remote_layer = 2;
+}
+
+// Request message of the ReadNodeState method of the Node service.
+message ReadNodeStateRequest {
+    // The current neighbours of the compute node.
+    repeated addnn.grpc.controller.Node neighbour_nodes = 1;
+}
+
+// Response message of the ReadNodeState method of the Node service.
+message ReadNodeStateResponse {
+    // The current state of the compute node.
+    addnn.grpc.node_state.NodeState node_state = 1;
+}
+
+// Request message of the UpdateResourceState method of the Node service.
+message UpdateResourceStateRequest {
+    // The updated resource state of the compute node.
+    addnn.grpc.node_state.ResourceState resource_state = 1;
+}
+
+// Request message of the ReadNeighbourNodes method of the Node service.
+message ReadNeighbourNodesResponse {
+    // The current neighbours of the compute node.
+    repeated addnn.grpc.controller.Node neighbour_nodes = 1;
+}

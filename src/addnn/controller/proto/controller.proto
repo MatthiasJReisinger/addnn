@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "addnn/node/proto/node_state.proto";
+
+package addnn.grpc.controller;
+
+service Controller {
+    // Register a compute node at the controller.
+    rpc RegisterNode(RegisterNodeRequest) returns (google.protobuf.Empty) {}
+
+    // Deregisters a compute node at the controller.
+    rpc DeregisterNode(DeregisterNodeRequest) returns (google.protobuf.Empty) {}
+
+    // Update the state of a registrered compute node at the controller.
+    rpc UpdateNodeState(UpdateNodeStateRequest) returns (google.protobuf.Empty) {}
+
+    // Lists all nodes that are currently registered at the controller.
+    rpc ListNodes(google.protobuf.Empty) returns (ListNodesResponse) {}
+}
+
+// Represents a compute node of an ADDNN.
+message Node {
+    // The host name or IP of the node.
+    string host = 1;
+
+    // The port at which the node's APIs can be reached.
+    uint32 port = 2;
+
+    // The tier that the node is part of.
+    uint32 tier = 3;
+
+    // Whether the node is the input source for the neural network (i.e., the
+    // node represents an end device or sensor).
+    bool is_input = 4;
+
+    // The current resource state of the node.
+    addnn.grpc.node_state.NodeState state = 5;
+
+    // The port at which the node's iperf server is exposed
+    uint32 iperf_port = 6;
+}
+
+// Request message of the RegisterNode method of the Controller service.
+message RegisterNodeRequest {
+    // The node that should be registered.
+    Node node = 1;
+}
+
+// Response message of the RegisterNode method of the Controller service.
+message RegisterNodeResponse {
+    // The UUID that the controller assigned to the new node.
+    string uuid = 1;
+}
+
+// Request message of the DeregisterNode method of the Controller service.
+message DeregisterNodeRequest {
+    // The UUID of the node that should be deregistered.
+    string uuid = 1;
+}
+
+// Request message of the UpdateNodeState method of the Controller service.
+message UpdateNodeStateRequest {
+    // The UUID of the node that should be deregistered.
+    string uuid = 1;
+
+    // The updated state of the compute node.
+    addnn.grpc.node_state.NodeState node_state = 2;
+}
+
+// Represents a compute node that is registered at the controller.
+message RegisteredNode {
+    // The UUID that the controller assigned to the node.
+    string uuid = 1;
+
+    // The node that is registered at the controller.
+    Node node = 2;
+}
+
+// Request message of the ListNodes method of the Controller service.
+message ListNodesResponse {
+    // The nodes that are currently registered at the controller.
+    repeated RegisteredNode nodes = 1;
+}

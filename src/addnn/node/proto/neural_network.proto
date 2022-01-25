@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package addnn.grpc.neuralnetwork;
+
+service NeuralNetwork {
+    rpc Infer(InferRequest) returns (InferResponse) {}
+}
+
+// Request message of the Infer method of the NeuralNetwork service.
+message InferRequest {
+    // A pickled torch.Tensor that represents the classifier of this exit.
+    bytes tensor = 1;
+}
+
+// Response message of the Infer method of the NeuralNetwork service.
+message InferResponse {
+    // The classification result that was inferred for the input tensor.
+    int32 classification = 1;
+
+    // The time at which the inference was triggered (unix time in micro seconds).
+    uint64 start_timestamp = 2;
+
+    // The time at which inference finished (unix time in micro seconds).
+    uint64 end_timestamp = 3;
+}

@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+import "addnn/controller/proto/controller.proto";
+
+// Reporting information of a single scheduler run.
+message Report {
+    // The time at which the scheduler run was triggered (unix time in micro seconds).
+    uint64 start_timestamp = 1;
+
+    // The time at which the scheduler run finished (unix time in micro seconds).
+    uint64 end_timestamp = 2;
+
+    // The nodes and their states that were considered during this scheduler run.
+    repeated addnn.grpc.controller.RegisteredNode nodes = 3;
+
+    // The placement decision of this scheduler run.
+    Placement placement = 4;
+
+    // The estimated end-to-end inference latency of the chosen placement.
+    float estimated_latency = 5;
+
+    // Activation duration per node that was part of the placement.
+    repeated uint32 activation_durations = 6;
+
+    // The profiles of the layers.
+    repeated LayerProfile layer_profiles = 7;
+}
+
+// Represents a placement decision of a scheduler run.
+message Placement {
+    // For each layer this array holds the UUID of the respective node that was assigned to the layer.
+    repeated string nodes = 1;
+}
+
+message LayerProfile {
+    uint64 flops = 1;
+    uint64 in_memory_size = 2;
+    uint64 storage_size = 3;
+    uint64 marshalled_input_size = 4;
+    bool has_exit = 5;
+    uint32 number_of_exited_samples = 6;
+    float exit_probability = 7;
+    float execution_probability = 8;
+    repeated string operators = 9;
+}

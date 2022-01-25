@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package addnn.grpc.node_state;
+
+// Represents the state of an ADDNN compute node.
+message NodeState {
+    // The resource state of the node.
+    ResourceState resource_state = 1;
+
+    // The state of neural network that is hosted by the node.
+    NeuralNetworkState neural_network_state = 2;
+}
+
+// Represents the resource state of an ADDNN compute node.
+message ResourceState {
+    // The available RAM in bytes.
+    uint64 memory = 1;
+
+    // The available storage in bytes.
+    uint64 storage = 2;
+
+    // The available compute capacity in FLOPS.
+    uint64 compute = 3;
+
+    // The available bandwidth in bytes/sec.
+    uint64 bandwidth = 4;
+
+    // The network throughputs to the node's neighbours.
+    repeated NetworkThroughput network_throughputs = 5;
+
+    // The network latencies to the node's neighbours.
+    repeated NetworkLatency network_latencies = 6;
+}
+
+// The throughput between an ADDNN compute node and a specific neighbour node.
+message NetworkThroughput {
+    // Host or IP of the neighbour node.
+    string host = 1;
+
+    // The throughput in bits/second.
+    uint64 throughput = 2;
+}
+
+// The latency between an ADDNN compute node and a specific neighbour node.
+message NetworkLatency {
+    // Host or IP of the neighbour node.
+    string host = 1;
+
+    // The latency in milliseconds.
+    float latency = 2;
+}
+
+// The state of a neural network on its compute node.
+message NeuralNetworkState {
+    repeated LayerState layer_states = 1;
+}
+
+// The state of a layer on its compute node.
+message LayerState {
+    // The index of the layer that uniquely identifies the layer within the neural network.
+    uint32 layer_index = 1;
+
+    // The number of samples that exited at this layer.
+    uint32 number_of_exited_samples = 2;
+
+    // Whether the layer is currently active at that node.
+    bool active = 3;
+}
